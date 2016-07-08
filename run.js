@@ -91,15 +91,15 @@ get('/api/v1/projects')
         const milestoneEnteredRegex = /\*\*Milestone\*\*/;
 
         for (let auditTrail of ticketAuditTrails) {
-            let closedDate = null;
+            let lastClosedDate = null;
             let earliestMilestoneDate = null;
 
             for (let auditEntry of auditTrail) {
                 // Items in the audit trail are ordered from most recent to least recent.
                 const description = auditEntry.description;
 
-                if (statusToClosedRegex.test(description)) {
-                    closedDate = new Date(auditEntry.created_at);
+                if (statusToClosedRegex.test(description) && !lastClosedDate) {
+                    lastClosedDate = new Date(auditEntry.created_at);
                 }
 
                 if (milestoneEnteredRegex.test(description) && TEAM_NAME_REGEX.test(description)) {
@@ -107,7 +107,7 @@ get('/api/v1/projects')
                 }
             }
 
-            const leadTimeDays = (closedDate - earliestMilestoneDate) / MILLISECONDS_PER_DAY;
+            const leadTimeDays = (lastClosedDate - earliestMilestoneDate) / MILLISECONDS_PER_DAY;
 
             // Ignore tickets with very small or negative lead times
             // (negatives are likely due to tickets that were never closed, which I'm just ignoring for now).
